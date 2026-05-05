@@ -590,8 +590,8 @@ function receiptHtml(bill) {
       <header class="receipt-header">
         <div class="receipt-logo-wrap"><img src="${RECEIPT_LOGO_URL}" alt="R-TEC logo"></div>
         <div>
-          <h2>วิทยาลัยเทคโนโลยีระยองบริหารธุรกิจ</h2>
-          <p>R-TEC STOCK · Powered By PaOz</p>
+          <h2>วิทยาลัยเทคโนโลยีรัชต์ภาคย์</h2>
+          <p>Rajapark Technological College · Powered By PaOz</p>
         </div>
         <div class="receipt-badge">ใบเสร็จรับเงิน</div>
       </header>
