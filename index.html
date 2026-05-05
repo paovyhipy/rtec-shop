@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>R-TEC Stock Supabase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="fa-solid fa-boxes-stacked"></i>
+      <div>
+        <strong>R-TEC STOCK</strong>
+        <span>Supabase Webapp</span>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-tab="overview"><i class="fa-solid fa-chart-pie"></i><span>ภาพรวม</span></button>
+      <button class="nav-item" data-tab="pos"><i class="fa-solid fa-cart-shopping"></i><span>ขาย/เบิก</span></button>
+      <button class="nav-item" data-tab="products"><i class="fa-solid fa-box"></i><span>สินค้า</span></button>
+      <button class="nav-item" data-tab="students"><i class="fa-solid fa-user-graduate"></i><span>นักเรียน</span></button>
+      <button class="nav-item" data-tab="bills"><i class="fa-solid fa-receipt"></i><span>บิลย้อนหลัง</span></button>
+      <button class="nav-item" data-tab="logs"><i class="fa-solid fa-clock-rotate-left"></i><span>ประวัติ stock</span></button>
+    </nav>
+  </aside>
+
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1 id="page-title">ภาพรวมระบบ</h1>
+        <p id="connection-status">ยังไม่ได้เชื่อมต่อ Supabase</p>
+      </div>
+      <div class="top-actions">
+        <span id="clock" class="clock">--:--:--</span>
+        <button class="btn ghost" id="refresh-btn"><i class="fa-solid fa-rotate"></i> โหลดใหม่</button>
+        <button class="btn primary" id="settings-btn"><i class="fa-solid fa-gear"></i> ตั้งค่า Supabase</button>
+      </div>
+    </header>
+
+    <section id="overview" class="tab active">
+      <div class="metric-grid">
+        <article class="metric"><span>stock คงเหลือ</span><strong id="metric-stock">0</strong></article>
+        <article class="metric"><span>ขาย/เบิกแล้ว</span><strong id="metric-sold">0</strong></article>
+        <article class="metric green"><span>ยอดขายรวม</span><strong id="metric-revenue">0</strong></article>
+        <article class="metric amber"><span>สินค้าขายดี</span><strong id="metric-top-product">-</strong></article>
+      </div>
+      <div class="dashboard-grid">
+        <section class="panel"><div class="panel-head"><h2>รายการขายตามสินค้า</h2></div><canvas id="product-chart"></canvas></section>
+        <section class="panel"><div class="panel-head"><h2>stock ต่ำ</h2></div><div class="table-wrap compact"><table><thead><tr><th>สินค้า</th><th>คงเหลือ</th></tr></thead><tbody id="low-stock-body"></tbody></table></div></section>
+      </div>
+    </section>
+
+    <section id="pos" class="tab">
+      <div class="pos-grid">
+        <section class="panel pos-products">
+          <div class="panel-head">
+            <h2>เลือกสินค้า</h2>
+            <input id="pos-search" class="input" placeholder="ค้นหาชื่อ / บาร์โค้ด">
+          </div>
+          <div id="product-cards" class="product-cards"></div>
+        </section>
+        <section class="panel cart-panel">
+          <div class="panel-head"><h2>ตะกร้า</h2><button class="icon-btn" id="clear-cart" title="ล้างตะกร้า"><i class="fa-solid fa-trash"></i></button></div>
+          <div id="cart-items" class="cart-items"></div>
+          <div class="buyer-form">
+            <input id="sale-student-id" class="input" list="student-id-list" placeholder="รหัสนักเรียน">
+            <input id="sale-student-name" class="input" list="student-name-list" placeholder="ชื่อผู้รับ / ลูกค้า">
+            <div class="two-cols">
+              <input id="sale-level" class="input" placeholder="ระดับชั้น">
+              <input id="sale-department" class="input" placeholder="สาขา">
+            </div>
+            <div class="two-cols">
+              <input id="sale-staff" class="input" placeholder="พนักงานขาย">
+              <select id="sale-payment" class="input">
+                <option value="เงินสด">เงินสด</option>
+                <option value="โอนเงิน">โอนเงิน</option>
+                <option value="เบิกฟรี">เบิกฟรี</option>
+              </select>
+            </div>
+            <label class="check"><input type="checkbox" id="sale-free"> ใช้สิทธิ์ส่วนลด 100%</label>
+          </div>
+          <div class="cart-total"><span>รวม</span><strong id="cart-total">0 บาท</strong></div>
+          <button class="btn primary full" id="checkout-btn"><i class="fa-solid fa-check"></i> บันทึกขาย/เบิก</button>
+        </section>
+      </div>
+    </section>
+
+    <section id="products" class="tab">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>จัดการสินค้า</h2>
+          <div class="row-actions"><input id="product-search" class="input" placeholder="ค้นหาสินค้า"><button class="btn primary" id="add-product-btn"><i class="fa-solid fa-plus"></i> เพิ่มสินค้า</button></div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>รหัส</th><th>บาร์โค้ด</th><th>ชื่อสินค้า</th><th>stock</th><th>ราคา</th><th>หมวดหมู่</th><th>เทอม</th><th></th></tr></thead><tbody id="products-body"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="students" class="tab">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>ข้อมูลนักเรียน</h2>
+          <div class="row-actions"><input id="student-search" class="input" placeholder="ค้นหานักเรียน"><button class="btn primary" id="add-student-btn"><i class="fa-solid fa-plus"></i> เพิ่มนักเรียน</button></div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>รหัส</th><th>ชื่อ</th><th>ระดับชั้น</th><th>สาขา</th><th></th></tr></thead><tbody id="students-body"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="bills" class="tab">
+      <div class="panel">
+        <div class="panel-head"><h2>บิลย้อนหลัง</h2><input id="bill-search" class="input" placeholder="ค้นหาบิล / นักเรียน / สินค้า"></div>
+        <div class="table-wrap"><table><thead><tr><th>เวลา</th><th>เลขบิล</th><th>ผู้รับ</th><th>รายการ</th><th>จำนวน</th><th>รวม</th><th>ชำระ</th></tr></thead><tbody id="bills-body"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="logs" class="tab">
+      <div class="panel">
+        <div class="panel-head"><h2>ประวัติ stock</h2><button class="btn ghost" id="export-log-btn"><i class="fa-solid fa-file-export"></i> Export CSV</button></div>
+        <div class="table-wrap"><table><thead><tr><th>เวลา</th><th>ประเภท</th><th>บาร์โค้ด</th><th>สินค้า</th><th>จำนวน</th><th>หมายเหตุ</th></tr></thead><tbody id="logs-body"></tbody></table></div>
+      </div>
+    </section>
+  </main>
+
+  <datalist id="student-id-list"></datalist>
+  <datalist id="student-name-list"></datalist>
+
+  <dialog id="settings-dialog" class="dialog">
+    <form method="dialog" class="dialog-card">
+      <h2>ตั้งค่า Supabase</h2>
+      <label>Project URL<input id="supabase-url" class="input" placeholder="https://xxxx.supabase.co"></label>
+      <label>Anon public key<input id="supabase-key" class="input" placeholder="eyJ..."></label>
+      <div class="dialog-actions">
+        <button class="btn ghost" value="cancel">ยกเลิก</button>
+        <button class="btn primary" id="save-settings" value="default">บันทึก</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="product-dialog" class="dialog">
+    <form method="dialog" class="dialog-card">
+      <h2 id="product-dialog-title">สินค้า</h2>
+      <input type="hidden" id="product-id">
+      <div class="two-cols"><label>รหัสสินค้า<input id="book-id" class="input"></label><label>บาร์โค้ด<input id="barcode" class="input" required></label></div>
+      <label>ชื่อสินค้า<input id="book-name" class="input" required></label>
+      <div class="two-cols"><label>stock<input id="stock-qty" class="input" type="number" min="0" value="0"></label><label>ราคา<input id="price" class="input" type="number" min="0" step="0.01" value="0"></label></div>
+      <div class="two-cols"><label>วันที่เข้าล็อต<input id="lot-date" class="input" type="date"></label><label>เทอม<input id="semester" class="input"></label></div>
+      <label>หมวดหมู่<input id="category" class="input"></label>
+      <label>ผู้ทำรายการ<input id="product-staff" class="input" placeholder="ชื่อพนักงาน"></label>
+      <div class="dialog-actions"><button class="btn ghost" value="cancel">ยกเลิก</button><button class="btn primary" id="save-product" value="default">บันทึก</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="student-dialog" class="dialog">
+    <form method="dialog" class="dialog-card">
+      <h2 id="student-dialog-title">นักเรียน</h2>
+      <input type="hidden" id="student-row-id">
+      <label>รหัสนักเรียน<input id="student-id" class="input" required></label>
+      <label>ชื่อ-นามสกุล<input id="student-full-name" class="input" required></label>
+      <div class="two-cols"><label>ระดับชั้น<input id="student-level" class="input"></label><label>สาขา<input id="student-department" class="input"></label></div>
+      <div class="dialog-actions"><button class="btn ghost" value="cancel">ยกเลิก</button><button class="btn primary" id="save-student" value="default">บันทึก</button></div>
+    </form>
+  </dialog>
+
+  <template id="empty-row-template"><tr><td colspan="8" class="empty">ไม่มีข้อมูล</td></tr></template>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="app.js"></script>
+</body>
+</html>
