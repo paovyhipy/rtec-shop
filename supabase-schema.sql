@@ -85,6 +85,8 @@ drop policy if exists "anon can read students" on public.students;
 drop policy if exists "anon can write students" on public.students;
 drop policy if exists "anon can read transactions" on public.transactions;
 drop policy if exists "anon can write transactions" on public.transactions;
+drop policy if exists "anon can update transactions" on public.transactions;
+drop policy if exists "anon can delete transactions" on public.transactions;
 drop policy if exists "anon can read logs" on public.logs;
 drop policy if exists "anon can write logs" on public.logs;
 
@@ -94,6 +96,8 @@ create policy "anon can read students" on public.students for select to anon usi
 create policy "anon can write students" on public.students for all to anon using (true) with check (true);
 create policy "anon can read transactions" on public.transactions for select to anon using (true);
 create policy "anon can write transactions" on public.transactions for insert to anon with check (true);
+create policy "anon can update transactions" on public.transactions for update to anon using (true) with check (true);
+create policy "anon can delete transactions" on public.transactions for delete to anon using (true);
 create policy "anon can read logs" on public.logs for select to anon using (true);
 create policy "anon can write logs" on public.logs for insert to anon with check (true);
 

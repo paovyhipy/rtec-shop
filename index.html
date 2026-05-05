@@ -16,7 +16,7 @@
       <i class="fa-solid fa-boxes-stacked"></i>
       <div>
         <strong>R-TEC STOCK</strong>
-        <span>Supabase Webapp</span>
+        <span>Powered By PaOz</span>
       </div>
     </div>
     <nav class="nav">
@@ -38,6 +38,7 @@
       <div class="top-actions">
         <span id="clock" class="clock">--:--:--</span>
         <button class="btn ghost" id="refresh-btn"><i class="fa-solid fa-rotate"></i> โหลดใหม่</button>
+        <button class="btn ghost" id="export-excel-btn"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
         <button class="btn sync" id="sync-sheets-btn"><i class="fa-solid fa-cloud-arrow-down"></i> ซิงก์ข้อมูลจาก Sheets</button>
       </div>
     </header>
@@ -60,9 +61,19 @@
         <section class="panel pos-products">
           <div class="panel-head">
             <h2>เลือกสินค้า</h2>
-            <input id="pos-search" class="input" placeholder="ค้นหาชื่อ / บาร์โค้ด">
+            <div class="pos-toolbar">
+              <input id="pos-search" class="input" placeholder="ค้นหาชื่อ / บาร์โค้ด">
+              <select id="pos-category" class="input category-select">
+                <option value="">ทุกหมวดหมู่</option>
+              </select>
+            </div>
           </div>
-          <div id="product-cards" class="product-cards"></div>
+          <div class="table-wrap pos-table-wrap">
+            <table class="product-list-table">
+              <thead><tr><th>รหัส</th><th>บาร์โค้ด</th><th>ชื่อสินค้า</th><th>หมวดหมู่</th><th>stock</th><th>ราคา</th><th></th></tr></thead>
+              <tbody id="product-cards"></tbody>
+            </table>
+          </div>
         </section>
         <section class="panel cart-panel">
           <div class="panel-head"><h2>ตะกร้า</h2><button class="icon-btn" id="clear-cart" title="ล้างตะกร้า"><i class="fa-solid fa-trash"></i></button></div>
@@ -94,7 +105,20 @@
       <div class="panel">
         <div class="panel-head">
           <h2>จัดการสินค้า</h2>
-          <div class="row-actions"><input id="product-search" class="input" placeholder="ค้นหาสินค้า"><button class="btn primary" id="add-product-btn"><i class="fa-solid fa-plus"></i> เพิ่มสินค้า</button></div>
+          <div class="row-actions product-filters">
+            <select id="product-search-field" class="input filter-select">
+              <option value="all">ค้นหาทั้งหมด</option>
+              <option value="category">หมวดหมู่</option>
+              <option value="book_id">รหัสสินค้า</option>
+              <option value="barcode">บาร์โค้ด</option>
+              <option value="book_name">ชื่อหนังสือ</option>
+            </select>
+            <select id="product-category-filter" class="input filter-select">
+              <option value="">ทุกหมวดหมู่</option>
+            </select>
+            <input id="product-search" class="input" placeholder="ค้นหาสินค้า">
+            <button class="btn primary" id="add-product-btn"><i class="fa-solid fa-plus"></i> เพิ่มสินค้า</button>
+          </div>
         </div>
         <div class="table-wrap"><table><thead><tr><th>รหัส</th><th>บาร์โค้ด</th><th>ชื่อสินค้า</th><th>stock</th><th>ราคา</th><th>หมวดหมู่</th><th>เทอม</th><th></th></tr></thead><tbody id="products-body"></tbody></table></div>
       </div>
@@ -104,7 +128,17 @@
       <div class="panel">
         <div class="panel-head">
           <h2>ข้อมูลนักเรียน</h2>
-          <div class="row-actions"><input id="student-search" class="input" placeholder="ค้นหานักเรียน"><button class="btn primary" id="add-student-btn"><i class="fa-solid fa-plus"></i> เพิ่มนักเรียน</button></div>
+          <div class="row-actions student-filters">
+            <select id="student-search-field" class="input filter-select">
+              <option value="all">ค้นหาทั้งหมด</option>
+              <option value="full_name">ชื่อ-นามสกุล</option>
+              <option value="student_id">รหัส</option>
+              <option value="department">สาขา</option>
+              <option value="level">ระดับชั้น</option>
+            </select>
+            <input id="student-search" class="input" placeholder="ค้นหานักเรียน">
+            <button class="btn primary" id="add-student-btn"><i class="fa-solid fa-plus"></i> เพิ่มนักเรียน</button>
+          </div>
         </div>
         <div class="table-wrap"><table><thead><tr><th>รหัส</th><th>ชื่อ</th><th>ระดับชั้น</th><th>สาขา</th><th></th></tr></thead><tbody id="students-body"></tbody></table></div>
       </div>
@@ -113,7 +147,7 @@
     <section id="bills" class="tab">
       <div class="panel">
         <div class="panel-head"><h2>บิลย้อนหลัง</h2><input id="bill-search" class="input" placeholder="ค้นหาบิล / นักเรียน / สินค้า"></div>
-        <div class="table-wrap"><table><thead><tr><th>เวลา</th><th>เลขบิล</th><th>ผู้รับ</th><th>รายการ</th><th>จำนวน</th><th>รวม</th><th>ชำระ</th></tr></thead><tbody id="bills-body"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>เวลา</th><th>เลขบิล</th><th>ผู้รับ</th><th>รายการ</th><th>จำนวน</th><th>รวม</th><th>ชำระ</th><th></th></tr></thead><tbody id="bills-body"></tbody></table></div>
       </div>
     </section>
 
@@ -127,6 +161,7 @@
 
   <datalist id="student-id-list"></datalist>
   <datalist id="student-name-list"></datalist>
+  <datalist id="category-list"></datalist>
 
   <dialog id="product-dialog" class="dialog">
     <form method="dialog" class="dialog-card">
@@ -136,9 +171,9 @@
       <label>ชื่อสินค้า<input id="book-name" class="input" required></label>
       <div class="two-cols"><label>stock<input id="stock-qty" class="input" type="number" min="0" value="0"></label><label>ราคา<input id="price" class="input" type="number" min="0" step="0.01" value="0"></label></div>
       <div class="two-cols"><label>วันที่เข้าล็อต<input id="lot-date" class="input" type="date"></label><label>เทอม<input id="semester" class="input"></label></div>
-      <label>หมวดหมู่<input id="category" class="input"></label>
+      <label>หมวดหมู่<input id="category" class="input" list="category-list"></label>
       <label>ผู้ทำรายการ<input id="product-staff" class="input" placeholder="ชื่อพนักงาน"></label>
-      <div class="dialog-actions"><button class="btn ghost" value="cancel">ยกเลิก</button><button class="btn primary" id="save-product" value="default">บันทึก</button></div>
+      <div class="dialog-actions"><button type="button" class="btn ghost" id="cancel-product">ยกเลิก</button><button type="button" class="btn primary" id="save-product">บันทึก</button></div>
     </form>
   </dialog>
 
@@ -149,7 +184,7 @@
       <label>รหัสนักเรียน<input id="student-id" class="input" required></label>
       <label>ชื่อ-นามสกุล<input id="student-full-name" class="input" required></label>
       <div class="two-cols"><label>ระดับชั้น<input id="student-level" class="input"></label><label>สาขา<input id="student-department" class="input"></label></div>
-      <div class="dialog-actions"><button class="btn ghost" value="cancel">ยกเลิก</button><button class="btn primary" id="save-student" value="default">บันทึก</button></div>
+      <div class="dialog-actions"><button type="button" class="btn ghost" id="cancel-student">ยกเลิก</button><button type="button" class="btn primary" id="save-student">บันทึก</button></div>
     </form>
   </dialog>
 
@@ -158,6 +193,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
