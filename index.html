@@ -53,6 +53,7 @@
       <div class="dashboard-grid">
         <section class="panel"><div class="panel-head"><h2>รายการขายตามสินค้า</h2></div><canvas id="product-chart"></canvas></section>
         <section class="panel"><div class="panel-head"><h2>stock ต่ำ</h2></div><div class="table-wrap compact"><table><thead><tr><th>สินค้า</th><th>คงเหลือ</th></tr></thead><tbody id="low-stock-body"></tbody></table></div></section>
+        <section class="panel high-stock-panel"><div class="panel-head"><h2>stock สูง</h2></div><div class="table-wrap compact"><table><thead><tr><th>สินค้า</th><th>คงเหลือ</th></tr></thead><tbody id="high-stock-body"></tbody></table></div></section>
       </div>
     </section>
 
@@ -115,6 +116,11 @@
             </select>
             <select id="product-category-filter" class="input filter-select">
               <option value="">ทุกหมวดหมู่</option>
+            </select>
+            <select id="product-stock-sort" class="input filter-select">
+              <option value="code_asc">เรียงตามรหัส</option>
+              <option value="stock_asc">stock น้อยไปมาก</option>
+              <option value="stock_desc">stock มากไปน้อย</option>
             </select>
             <input id="product-search" class="input" placeholder="ค้นหาสินค้า">
             <button class="btn primary" id="add-product-btn"><i class="fa-solid fa-plus"></i> เพิ่มสินค้า</button>

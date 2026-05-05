@@ -57,7 +57,7 @@ function bindEvents() {
     els[key].addEventListener("input", renderAll);
   });
   els.posCategory.addEventListener("change", renderProductCards);
-  ["productSearchField", "productCategoryFilter", "studentSearchField"].forEach((key) => {
+  ["productSearchField", "productCategoryFilter", "productStockSort", "studentSearchField"].forEach((key) => {
     els[key].addEventListener("change", renderAll);
   });
 
@@ -302,10 +302,15 @@ function renderDashboard() {
   els.metricRevenue.textContent = money(revenue);
   els.metricTopProduct.textContent = topProduct ? topProduct[0] : "-";
 
-  const low = [...state.products].sort((a, b) => Number(a.stock_qty) - Number(b.stock_qty)).slice(0, 8);
+  const low = [...state.products].sort((a, b) => Number(a.stock_qty) - Number(b.stock_qty)).slice(0, 10);
+  const high = [...state.products].sort((a, b) => Number(b.stock_qty) - Number(a.stock_qty)).slice(0, 10);
   fillRows(els.lowStockBody, low, (product) => `
     <td>${escapeHtml(product.book_name)}</td>
     <td><span class="pill">${Number(product.stock_qty).toLocaleString("th-TH")}</span></td>
+  `, 2);
+  fillRows(els.highStockBody, high, (product) => `
+    <td>${escapeHtml(product.book_name)}</td>
+    <td><span class="pill high-pill">${Number(product.stock_qty).toLocaleString("th-TH")}</span></td>
   `, 2);
   renderChart(productSales);
 }
@@ -334,10 +339,10 @@ function renderProducts() {
   const field = els.productSearchField.value;
   const category = els.productCategoryFilter.value;
   const keys = field === "all" ? ["book_id", "barcode", "book_name", "category"] : [field];
-  const products = sortProducts(state.products.filter((product) => {
+  const products = sortProductsForView(state.products.filter((product) => {
     const matchCategory = !category || product.category === category;
     return matchCategory && searchable(product, keys, query);
-  }));
+  }), els.productStockSort.value);
   fillRows(els.productsBody, products, (product) => `
     <td>${escapeHtml(product.book_id || "-")}</td>
     <td>${escapeHtml(product.barcode)}</td>
@@ -1087,6 +1092,16 @@ function sortProducts(products) {
     if (numberDiff !== 0) return numberDiff;
     return clean(a.book_id).localeCompare(clean(b.book_id), "th", { numeric: true });
   });
+}
+
+function sortProductsForView(products, mode) {
+  if (mode === "stock_asc") {
+    return [...products].sort((a, b) => Number(a.stock_qty || 0) - Number(b.stock_qty || 0) || productCodeNumber(a.book_id) - productCodeNumber(b.book_id));
+  }
+  if (mode === "stock_desc") {
+    return [...products].sort((a, b) => Number(b.stock_qty || 0) - Number(a.stock_qty || 0) || productCodeNumber(a.book_id) - productCodeNumber(b.book_id));
+  }
+  return sortProducts(products);
 }
 
 function productCodeNumber(value) {
