@@ -39,8 +39,6 @@ function bindEvents() {
     button.addEventListener("click", () => switchTab(button.dataset.tab));
   });
 
-  els.settingsBtn.addEventListener("click", openSettings);
-  els.saveSettings.addEventListener("click", saveSettings);
   els.refreshBtn.addEventListener("click", loadAllData);
   els.syncSheetsBtn.addEventListener("click", syncGoogleSheets);
   els.addProductBtn.addEventListener("click", () => openProductDialog());
@@ -66,8 +64,8 @@ function toCamel(id) {
 }
 
 function initSupabaseFromStorage() {
-  const url = localStorage.getItem("rtec_supabase_url") || SUPABASE_DEFAULT_URL;
-  const key = localStorage.getItem("rtec_supabase_key") || SUPABASE_DEFAULT_ANON_KEY;
+  const url = SUPABASE_DEFAULT_URL;
+  const key = SUPABASE_DEFAULT_ANON_KEY;
   if (!url || !key || !window.supabase) {
     setStatus("ยังไม่ได้เชื่อมต่อ Supabase", false);
     return;
@@ -81,31 +79,9 @@ function setStatus(text, connected) {
   els.connectionStatus.style.color = connected ? "#20805a" : "#64748b";
 }
 
-function openSettings() {
-  els.supabaseUrl.value = localStorage.getItem("rtec_supabase_url") || SUPABASE_DEFAULT_URL;
-  els.supabaseKey.value = localStorage.getItem("rtec_supabase_key") || SUPABASE_DEFAULT_ANON_KEY;
-  els.settingsDialog.showModal();
-}
-
-function saveSettings(event) {
-  event.preventDefault();
-  const url = els.supabaseUrl.value.trim();
-  const key = els.supabaseKey.value.trim();
-  if (!url || !key) {
-    notify("กรุณาใส่ Project URL และ anon key", "warning");
-    return;
-  }
-  localStorage.setItem("rtec_supabase_url", url);
-  localStorage.setItem("rtec_supabase_key", key);
-  els.settingsDialog.close();
-  initSupabaseFromStorage();
-  loadAllData();
-}
-
 async function requireDb() {
   if (!state.supabase) {
-    openSettings();
-    throw new Error("Supabase is not configured");
+    throw new Error("ยังเชื่อมต่อ Supabase ไม่ได้ กรุณาตรวจว่าโหลด Supabase JS สำเร็จ");
   }
   return state.supabase;
 }

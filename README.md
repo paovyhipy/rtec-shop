@@ -14,7 +14,7 @@
 1. สร้าง Supabase project
 2. เปิด SQL Editor แล้วรันไฟล์ `supabase-schema.sql`
 3. เปิด `index.html` ใน browser
-4. กดปุ่มตั้งค่า Supabase มุมขวาบน แล้วใส่ Project URL และ anon public key
+4. เปิดเว็บแล้วระบบจะเชื่อม Supabase project ที่ตั้งไว้ใน `app.js` อัตโนมัติ
 5. เริ่มเพิ่มสินค้า นักเรียน และทำรายการขาย/เบิก
 
 ## Sync จาก Google Sheets

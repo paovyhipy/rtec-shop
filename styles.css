@@ -207,8 +207,8 @@ h2 { font-size: 17px; color: var(--primary-dark); }
 .btn.primary { background: var(--primary); color: #fff; }
 .btn.primary:hover { background: var(--primary-dark); }
 .btn.ghost { background: var(--surface-soft); border-color: var(--line); color: var(--primary-dark); }
-.btn.sync { background: #e9f7ef; border-color: #b7dfc9; color: var(--green); }
-.btn.sync:hover { background: #d8f0e3; }
+.btn.sync { background: var(--green); border-color: var(--green); color: #fff; font-weight: 700; }
+.btn.sync:hover { background: #176945; border-color: #176945; }
 .btn.full { width: 100%; }
 .icon-btn { width: 38px; padding: 0; background: var(--surface-soft); color: var(--primary-dark); }
 .danger { color: var(--red); }
