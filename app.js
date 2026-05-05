@@ -1,6 +1,8 @@
 const els = {};
 const SUPABASE_DEFAULT_URL = "https://owvnerfgjlwkfnpyhhqh.supabase.co";
 const SUPABASE_DEFAULT_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93dm5lcmZnamx3a2ZucHloaHFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5Nzc1MDcsImV4cCI6MjA5MzU1MzUwN30.OIUdeCj1aCQ4RhSbjU7A_qMwGQwf5fFWitNzFZIsxPA";
+const GOOGLE_SHEET_ID = "1Psx0Dx2_lRYQCuFbY6VeuCTJIVVAtksx_ko0MevZnB8";
+const SYNC_PASSWORD = "0809212008";
 const state = {
   supabase: null,
   products: [],
@@ -40,6 +42,7 @@ function bindEvents() {
   els.settingsBtn.addEventListener("click", openSettings);
   els.saveSettings.addEventListener("click", saveSettings);
   els.refreshBtn.addEventListener("click", loadAllData);
+  els.syncSheetsBtn.addEventListener("click", syncGoogleSheets);
   els.addProductBtn.addEventListener("click", () => openProductDialog());
   els.saveProduct.addEventListener("click", saveProduct);
   els.addStudentBtn.addEventListener("click", () => openStudentDialog());
@@ -131,6 +134,140 @@ async function loadAllData() {
   } catch (error) {
     if (error.message !== "Supabase is not configured") notify(error.message, "error");
     setStatus("เชื่อมต่อไม่ได้หรือยังไม่ได้ตั้งค่า", false);
+  }
+}
+
+async function syncGoogleSheets() {
+  try {
+    await requireDb();
+    const pass = await Swal.fire({
+      title: "ใส่รหัสก่อน Sync",
+      input: "password",
+      inputPlaceholder: "รหัสผ่าน",
+      showCancelButton: true,
+      confirmButtonText: "เริ่ม Sync",
+      cancelButtonText: "ยกเลิก",
+      inputValidator: (value) => {
+        if (!value) return "กรุณาใส่รหัสผ่าน";
+        if (value !== SYNC_PASSWORD) return "รหัสผ่านไม่ถูกต้อง";
+        return undefined;
+      }
+    });
+    if (!pass.isConfirmed) return;
+
+    Swal.fire({
+      title: "กำลัง Sync ข้อมูล...",
+      text: "กำลังดึง Inventory และ Students จาก Google Sheets",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    const [productRows, studentRows] = await Promise.all([
+      loadGoogleSheet("Inventory"),
+      loadGoogleSheet("Students")
+    ]);
+
+    const products = productRows.map(mapSheetProduct).filter(Boolean);
+    const students = studentRows.map(mapSheetStudent).filter(Boolean);
+
+    await upsertInBatches(TABLES.products, products, "book_id");
+    await upsertInBatches(TABLES.students, students, "student_id");
+    await loadAllData();
+
+    Swal.fire({
+      icon: "success",
+      title: "Sync สำเร็จ",
+      text: `อัปเดตสินค้า ${products.length} รายการ และนักเรียน ${students.length} รายการ`,
+      confirmButtonText: "ตกลง"
+    });
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Sync ไม่สำเร็จ",
+      text: error.message,
+      confirmButtonText: "ตกลง"
+    });
+  }
+}
+
+function loadGoogleSheet(sheetName) {
+  return new Promise((resolve, reject) => {
+    const callbackName = `__rtecSheetCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const script = document.createElement("script");
+    const cleanup = () => {
+      delete window[callbackName];
+      script.remove();
+    };
+
+    window[callbackName] = (response) => {
+      try {
+        cleanup();
+        if (response.status === "error") {
+          reject(new Error(response.errors?.[0]?.detailed_message || `อ่านชีต ${sheetName} ไม่ได้`));
+          return;
+        }
+        resolve(tableToObjects(response.table));
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error(`โหลดข้อมูลจาก Google Sheets แท็บ ${sheetName} ไม่ได้`));
+    };
+    script.src = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&tqx=responseHandler:${callbackName}`;
+    document.body.appendChild(script);
+  });
+}
+
+function tableToObjects(table) {
+  const headers = (table.cols || []).map((col) => col.label || col.id);
+  return (table.rows || []).map((row) => {
+    const object = {};
+    headers.forEach((header, index) => {
+      const cell = row.c?.[index];
+      object[header] = cell?.f ?? cell?.v ?? "";
+    });
+    return object;
+  });
+}
+
+function mapSheetProduct(row) {
+  const bookId = clean(row.BookID);
+  const bookName = clean(row.BookName);
+  if (!bookId || !bookName) return null;
+  return {
+    book_id: bookId,
+    barcode: clean(row.Barcode) || null,
+    book_name: bookName,
+    stock_qty: Math.max(0, Math.trunc(toNumber(row.StockQty))),
+    image_url: clean(row.ImageURL) || null,
+    lot_date: sheetDateToIso(row.LotDate),
+    price: toNumber(row.Price),
+    category: clean(row.Category),
+    semester: clean(row.Semester)
+  };
+}
+
+function mapSheetStudent(row) {
+  const studentId = clean(row.StudentID);
+  const fullName = clean(row.FullName);
+  if (!studentId || !fullName) return null;
+  return {
+    student_id: studentId,
+    full_name: fullName,
+    level: clean(row.Level),
+    department: clean(row.Department)
+  };
+}
+
+async function upsertInBatches(table, rows, onConflict) {
+  if (!rows.length) return;
+  for (let index = 0; index < rows.length; index += 500) {
+    const batch = rows.slice(index, index + 500);
+    const result = await state.supabase.from(table).upsert(batch, { onConflict });
+    if (result.error) throw result.error;
   }
 }
 
@@ -589,6 +726,33 @@ function searchable(row, keys, query) {
 
 function normalize(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function clean(value) {
+  return String(value ?? "").trim();
+}
+
+function toNumber(value) {
+  const number = Number(clean(value).replaceAll(",", ""));
+  return Number.isFinite(number) ? number : 0;
+}
+
+function sheetDateToIso(value) {
+  const raw = clean(value);
+  if (!raw) return null;
+  const dateMatch = raw.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})\)$/);
+  if (dateMatch) {
+    const year = dateMatch[1];
+    const month = String(Number(dateMatch[2]) + 1).padStart(2, "0");
+    const day = dateMatch[3].padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+  const parts = raw.split("/");
+  if (parts.length === 3) {
+    const [day, month, year] = parts;
+    return `${year.padStart(4, "0")}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+  return raw;
 }
 
 function money(value) {
